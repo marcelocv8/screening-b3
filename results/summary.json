@@ -1,13 +1,13 @@
 {
   "date": "2026-05-06",
-  "qualified": 705,
-  "tier_s": 22,
-  "tier_a": 193,
-  "tier_b": 249,
-  "breakouts": 16,
-  "vcps": 18,
+  "qualified": 1445,
+  "tier_s": 122,
+  "tier_a": 398,
+  "tier_b": 371,
+  "breakouts": 43,
+  "vcps": 27,
   "wedges": 0,
-  "fund_strong": 86,
-  "fund_ok": 84,
-  "fund_weak": 535
+  "fund_strong": 240,
+  "fund_ok": 294,
+  "fund_weak": 911
 }
