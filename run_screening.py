@@ -305,6 +305,7 @@ def process_batch(universe: pd.DataFrame, yf_client: YFinanceClient,
         weekly_score = 0.0
         weekly_tier = "C"
         weekly_patterns = {}
+        weekly_breakout = False
         if df_weekly is not None and len(df_weekly) >= 30:
             try:
                 weekly_result = score_stock(
@@ -315,6 +316,7 @@ def process_batch(universe: pd.DataFrame, yf_client: YFinanceClient,
                 weekly_score = weekly_result["technical_score"]
                 weekly_tier = weekly_result["technical_tier"]
                 weekly_patterns = weekly_result.get("patterns", {})
+                weekly_breakout = weekly_result.get("breakout", False)
             except Exception:
                 pass
         
@@ -357,7 +359,7 @@ def process_batch(universe: pd.DataFrame, yf_client: YFinanceClient,
             "double_bottom_weekly": weekly_patterns.get("double_bottom", {}).get("detected", False),
             "inverse_hs_weekly": weekly_patterns.get("inverse_hs", {}).get("detected", False),
             "pre_breakout_weekly": weekly_patterns.get("pre_breakout", False),
-            "breakout_weekly": weekly_result.get("breakout", False) if 'weekly_result' in dir() else False,
+            "breakout_weekly": weekly_breakout,
             "roe": fundamentals.get("roe", 0),
             "pl": fundamentals.get("pl", 0),
             "pvp": fundamentals.get("pvp", 0),
