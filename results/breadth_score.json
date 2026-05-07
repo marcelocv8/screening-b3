@@ -1,0 +1,16 @@
+{
+  "pct_above_sma50": 51.8,
+  "pct_above_sma200": 46.6,
+  "tier_s": 85,
+  "tier_a": 151,
+  "new_highs": 34,
+  "vcp_count": 3,
+  "breakout_count": 34,
+  "total_signals": 1415,
+  "avg_signals": 1415,
+  "signal_vs_avg": 1.0,
+  "total_stocks": 787,
+  "allocation_score": 3,
+  "regime": "Neutro — Cauteloso",
+  "allocation_pct": "40-60%"
+}
