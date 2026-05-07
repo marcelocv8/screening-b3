@@ -11,6 +11,100 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# ═══════════════════════════════════════════════════════════════
+# TERMINAL BLACK THEME — CSS via st.html (Cloud-compatible)
+# ═══════════════════════════════════════════════════════════════
+st.html("""
+<style>
+  /* Force dark background on main container */
+  .stApp {
+    background-color: #050505 !important;
+  }
+  .main .block-container {
+    background-color: #050505 !important;
+    padding-top: 2rem;
+    max-width: 1400px;
+  }
+  /* Metric cards */
+  [data-testid="stMetric"] {
+    background-color: #0f0f0f;
+    border: 1px solid #1a1a1a;
+    border-radius: 12px;
+    padding: 16px;
+  }
+  [data-testid="stMetric"] > div {
+    color: #e0e0e0;
+  }
+  [data-testid="stMetricValue"] {
+    font-family: 'SF Mono', Monaco, monospace !important;
+    font-weight: 800 !important;
+    letter-spacing: -1px;
+    color: #00e676 !important;
+  }
+  [data-testid="stMetricLabel"] {
+    color: #666 !important;
+    font-size: 10px !important;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 700 !important;
+  }
+  /* Sidebar */
+  section[data-testid="stSidebar"] {
+    background-color: #0a0a0a !important;
+    border-right: 1px solid #1a1a1a;
+  }
+  section[data-testid="stSidebar"] .stMarkdown {
+    color: #888;
+  }
+  /* Tabs */
+  .stTabs [data-baseweb="tab-list"] {
+    gap: 8px;
+  }
+  .stTabs [data-baseweb="tab"] {
+    background-color: #0f0f0f;
+    border: 1px solid #1a1a1a;
+    border-radius: 10px;
+    color: #666;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .stTabs [data-baseweb="tab-highlight"] {
+    background-color: #00e676;
+  }
+  .stTabs [aria-selected="true"] {
+    background-color: #00e676 !important;
+    color: #000 !important;
+    border-color: #00e676 !important;
+  }
+  /* DataFrames */
+  .stDataFrame {
+    background-color: #0f0f0f;
+    border: 1px solid #1a1a1a;
+    border-radius: 12px;
+  }
+  .stDataFrame th {
+    background-color: #141414 !important;
+    color: #666 !important;
+    font-size: 10px !important;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 700 !important;
+  }
+  .stDataFrame td {
+    border-bottom: 1px solid #1a1a1a !important;
+    color: #e0e0e0 !important;
+    font-size: 13px !important;
+  }
+  .stDataFrame tr:hover td {
+    background-color: rgba(0, 230, 118, 0.04) !important;
+  }
+  /* Plotly charts */
+  .js-plotly-plot .plotly {
+    background-color: #0f0f0f !important;
+  }
+</style>
+""")
+
 RESULTS_DIR = Path("results")
 
 def load_data():
