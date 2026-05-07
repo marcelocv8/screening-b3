@@ -19,6 +19,7 @@ from src.data.yfinance_client import YFinanceClient
 from src.data.fundamentus_client import FundamentusClient
 from src.data.cvm_client import CVMClient
 from src.data.bdr_mapper import BDRMapper
+from src.data.fii_filter import load_allowed_11, is_fii
 from src.core.indicators import calculate_ma, relative_strength
 from src.core.scorer import score_stock
 
@@ -37,7 +38,7 @@ def is_fractional(ticker: str) -> bool:
     return ticker.upper().endswith("F")
 
 
-# Fallback list from lista de ativos br.xlsx (306 tickers)
+# Fallback list from lista de ativos br.xlsx + backup ProfitChart (368 tickers)
 FALLBACK_STOCKS = [
     "PETR4", "VALE3", "ITUB4", "PRIO3", "PETR3", "B3SA3", "BBDC4", "AXIA3", "SBSP3",
     "BBAS3", "BPAC11", "EMBJ3", "RENT3", "ITSA4", "ABEV3", "ENEV3", "CPLE3", "SUZB3",
@@ -73,9 +74,34 @@ FALLBACK_STOCKS = [
     "EQPA3", "INEP4", "CEBR5", "AGXY3", "MTSA4", "WDCN3", "PDTC3", "BEES4", "CRPG5",
     "AVLL3", "VIVR3", "CTKA4", "CGRA3", "UCAS3", "HOOT4", "BMKS3", "BIED3", "EKTR4",
     "EPAR3", "HAGA4", "PATI3", "WHRL3", "FHER3", "BGIP3", "BNBR3", "DEXP4", "TRAD3",
+    # Additional tickers from ProfitChart backup (Jul 2024)
+    "ALSO3", "ARZZ3", "ATMP3", "AZUL4", "BOAS3", "BPAN4", "BRFS3", "BRIT3", "CCRO3",
+    "CEDO4", "CIEL3", "CLSA3", "CPLE6", "CRFB3", "ELET6", "ELMD3", "EMBR3", "ENAT3",
+    "ENBR3", "GOLL4", "GUAR3", "JBSS3", "KRSA3", "LVTC3", "MBLY3", "MODL3", "MRFG3",
+    "NINJ3", "NTCO3", "PETZ3", "PORT3", "RDNI3", "RRRP3", "SGPS3", "SOMA3", "SQIA3",
+    "STBP3", "TRPL4", "VIIA3", "WIZS3", "ZAMP3",
 ]
 
-FALLBACK_ETFS = ["BOVA11", "SMAL11", "IVVB11", "BRCR11", "KNRI11", "HGLG11", "XPLG11", "VISC11"]
+FALLBACK_ETFS = [
+    "BOVA11", "SMAL11", "IVVB11", "BRCR11", "KNRI11", "HGLG11", "XPLG11", "VISC11",
+    # FIPs B3 ETFs
+    "AZIN11", "MINE11", "BSGD11", "BDIV11", "COPN11", "ENDD11", "FINC11", "ESUT11",
+    "ESUU11", "ESUD11", "NVRP11", "KNDI11", "KNOX11", "OPHF11", "PICE11", "PLBR11",
+    "FPOR11", "RZDL11", "VIGT11", "XPIE11", "BMMT11", "AGRI11", "BBOV11", "BRAZ11",
+    "DVER11", "BBOI11", "DOLA11", "CORN11", "BBSD11", "TECX11", "PKIN11", "OURO11",
+    "SPYR11", "BREW11", "BCIC11", "BDEF11", "IBOB11", "ESGB11", "GOLB11", "DOLB11",
+    "SPXB11", "SPBZ11", "GENB11", "SMAB11", "CMDB11", "AUVP11", "TIRB11", "BRXC11",
+    "RICO11", "GDIV11", "XBCI11", "XSPI11", "PIPE11", "QQQQ11", "QQQI11", "COIN11",
+    "FIXX11", "AURO11", "CASA11", "IWMI11", "SPYI11", "XBOV11", "GLDX11", "TRIG11",
+    "BOVB11", "GXUS11", "BULZ11", "ARGE11", "UTLL11", "PEVC11", "BEST11", "BVBR11",
+    "USTK11", "SVAL11", "CHIP11", "VWRA11", "IVWO11", "WRLD11", "GPUS11", "BDOM11",
+    "BXPO11", "SCVB11", "ALUG11", "NUCL11", "BIZD11", "CAPE11", "EWBZ11", "BRAX11",
+    "ECOO11", "SILK11", "GLDI11", "B3BR11", "BOVV11", "DIVO11", "DIVD11", "FIND11",
+    "GOVE11", "MATB11", "ISUS11", "MILL11", "HTEK11", "TECK11", "PIBB11", "REVE11",
+    "SPXR11", "SPXI11", "SMAC11", "NSDV11", "HIGH11", "LVOL11", "NBOV11", "NDIV11",
+    "QLBR11", "SPUB11", "SPVT11", "BOVS11", "ELAS11", "GOLX11", "ACWI11", "XINA11",
+    "UTEC11", "USAL11", "BOVX11", "GOLD11", "SLVR11", "NASD11", "DOLX11", "SPXH11",
+]
 
 FALLBACK_BDRS = {
     "AAPL34": "AAPL", "ABEV34": "ABEV", "AMZO34": "AMZN", "BERK34": "BRK-B",
@@ -89,9 +115,10 @@ FALLBACK_BDRS = {
 }
 
 def fetch_universe(brapi: BrapiClient, bdr_mapper: BDRMapper) -> pd.DataFrame:
-    """Fetch and aggressively filter universe."""
+    """Fetch and aggressively filter universe. Excludes FIIs via whitelist."""
     print("[1/6] Fetching universe from Brapi...")
     
+    allowed_11 = load_allowed_11()
     universe = []
     
     # Stocks
@@ -101,6 +128,12 @@ def fetch_universe(brapi: BrapiClient, bdr_mapper: BDRMapper) -> pd.DataFrame:
         stocks = pd.DataFrame({"stock": FALLBACK_STOCKS, "name": FALLBACK_STOCKS})
     if not stocks.empty:
         stocks = stocks[~stocks["stock"].apply(is_fractional)]
+        # Exclude FIIs: any ticker ending in 11 not in whitelist
+        before_fii = len(stocks)
+        stocks = stocks[~stocks["stock"].apply(lambda x: is_fii(x, allowed_11))]
+        after_fii = len(stocks)
+        if before_fii != after_fii:
+            print(f"[1/6] Excluded {before_fii - after_fii} FIIs (ticker 11 not in whitelist)")
         stocks["category"] = "BR_STOCK"
         stocks["analysis_ticker"] = stocks["stock"] + ".SA"
         universe.append(stocks[["stock", "name", "category", "analysis_ticker"]])
@@ -141,7 +174,6 @@ def fetch_universe(brapi: BrapiClient, bdr_mapper: BDRMapper) -> pd.DataFrame:
     df = pd.concat(universe, ignore_index=True)
     df = df.drop_duplicates(subset=["stock"])
     print(f"[1/6] Universe after filtering: {len(df)} tickers")
-    return df
     return df
 
 
@@ -258,7 +290,7 @@ def process_batch(universe: pd.DataFrame, yf_client: YFinanceClient,
                     "pvp": _parse_float(r.get("pvp", "0")),
                 }
         
-        # Score
+        # Score DAILY
         try:
             score_result = score_stock(
                 df_daily, df_weekly,
@@ -269,6 +301,23 @@ def process_batch(universe: pd.DataFrame, yf_client: YFinanceClient,
             print(f"  [SKIP] {ticker}: scoring error: {e}")
             continue
         
+        # Score WEEKLY (if data available)
+        weekly_score = 0.0
+        weekly_tier = "C"
+        weekly_patterns = {}
+        if df_weekly is not None and len(df_weekly) >= 30:
+            try:
+                weekly_result = score_stock(
+                    df_weekly, None,
+                    fundamentals=fundamentals,
+                    avg_volume_financeiro=volume_financeiro
+                )
+                weekly_score = weekly_result["technical_score"]
+                weekly_tier = weekly_result["technical_tier"]
+                weekly_patterns = weekly_result.get("patterns", {})
+            except Exception:
+                pass
+        
         display = f"{analysis_ticker} (BDR: {ticker})" if category == "BDR" else ticker
         
         record = {
@@ -278,6 +327,8 @@ def process_batch(universe: pd.DataFrame, yf_client: YFinanceClient,
             "display": display,
             "technical_score": score_result["technical_score"],
             "technical_tier": score_result["technical_tier"],
+            "technical_score_weekly": weekly_score,
+            "technical_tier_weekly": weekly_tier,
             "fundamental_score": score_result["fundamental_score"],
             "fundamental_tag": score_result["fundamental_tag"],
             "price": round(last_close, 2),
@@ -299,6 +350,14 @@ def process_batch(universe: pd.DataFrame, yf_client: YFinanceClient,
             "breakout": score_result["breakout"],
             "breakout_vol_ratio": score_result["breakout_details"].get("volume_ratio", 0),
             "breakout_resistance": score_result["breakout_details"].get("resistance_level", 0),
+            # Weekly patterns
+            "vcp_weekly": weekly_patterns.get("vcp", {}).get("detected", False),
+            "wedge_weekly": weekly_patterns.get("wedge", {}).get("detected", False),
+            "cup_handle_weekly": weekly_patterns.get("cup_handle", {}).get("detected", False),
+            "double_bottom_weekly": weekly_patterns.get("double_bottom", {}).get("detected", False),
+            "inverse_hs_weekly": weekly_patterns.get("inverse_hs", {}).get("detected", False),
+            "pre_breakout_weekly": weekly_patterns.get("pre_breakout", False),
+            "breakout_weekly": weekly_result.get("breakout", False) if 'weekly_result' in dir() else False,
             "roe": fundamentals.get("roe", 0),
             "pl": fundamentals.get("pl", 0),
             "pvp": fundamentals.get("pvp", 0),
@@ -373,6 +432,16 @@ def run_screening():
     df_results = df_results.sort_values("technical_score", ascending=False).reset_index(drop=True)
     df_results["rank"] = df_results.index + 1
     
+    # 6.5 Market Breadth
+    print("[5.5/6] Calculating market breadth...")
+    from src.core.breadth import calculate_breadth_indicators
+    breadth_data = calculate_breadth_indicators(df_results, date_str=today_str)
+    
+    # 6.6 AI Opinion
+    print("[5.6/6] Generating AI opinion...")
+    from src.core.ai_opinion import get_ai_opinion
+    ai_opinion = get_ai_opinion(breadth_data, today_str)
+    
     # 7. Save
     today_str = datetime.now().strftime("%Y-%m-%d")
     print("[6/6] Saving...")
@@ -396,14 +465,24 @@ def run_screening():
         "fund_strong": int((df_results["fundamental_tag"] == "Forte").sum()),
         "fund_ok": int((df_results["fundamental_tag"] == "OK").sum()),
         "fund_weak": int((df_results["fundamental_tag"] == "Fraco").sum()),
+        "allocation_score": breadth_data.get("allocation_score", 3),
+        "regime": breadth_data.get("regime", "Neutro"),
     }
     
     with open(RESULTS_DIR / "summary.json", "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2)
     
+    with open(RESULTS_DIR / "breadth_score.json", "w", encoding="utf-8") as f:
+        json.dump(breadth_data, f, indent=2, ensure_ascii=False)
+    
+    with open(RESULTS_DIR / "ai_opinion.json", "w", encoding="utf-8") as f:
+        json.dump(ai_opinion, f, indent=2, ensure_ascii=False)
+    
     print(f"\n DONE! {len(df_results)} stocks | S:{summary['tier_s']} A:{summary['tier_a']} B:{summary['tier_b']}")
     print(f" Breakouts: {summary['breakouts']} | VCPs: {summary['vcps']} | Wedges: {summary['wedges']}")
     print(f" Fundamentals: Forte:{summary['fund_strong']} OK:{summary['fund_ok']} Fraco:{summary['fund_weak']}")
+    print(f" Market Regime: {summary['regime']} (Score: {summary['allocation_score']}/5)")
+    print(f" AI Opinion: {'✅ Gemini' if ai_opinion.get('has_ai') else '⚠️ Fallback'}")
 
 
 if __name__ == "__main__":

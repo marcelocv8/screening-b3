@@ -9,6 +9,8 @@ def detect_wedge_momentum(df: pd.DataFrame, lookback: int = 40) -> Tuple[bool, f
     Detect Wedge Momentum pattern (Qullamaggie/Chew style).
     Tops descending + bottoms ascending (symmetric wedge) OR descending channel
     with preserved momentum (SMA20 > SMA50 or price > SMA50).
+    
+    ENHANCED: Volume check uses rolling 5-candle average for smoother detection.
     Returns (is_wedge, confidence_score)
     """
     if len(df) < lookback + 20:
@@ -60,12 +62,22 @@ def detect_wedge_momentum(df: pd.DataFrame, lookback: int = 40) -> Tuple[bool, f
     if not momentum_ok:
         return False, 0.0
     
-    # Confidence scoring
+    # ENHANCED: Volume check using rolling 5-candle averages
+    # Compare last 5-candle avg vs prior 5-candle avg (smoother, less noisy)
+    vol_ma5 = sub["volume"].rolling(5).mean()
+    recent_vol_ma = vol_ma5.tail(5).mean()
+    prior_vol_ma = vol_ma5.tail(15).head(10).mean()  # candles 6-15 from end
+    
+    vol_drying = False
+    if prior_vol_ma > 0:
+        vol_drying = recent_vol_ma < prior_vol_ma * 0.85
+    
+    # Confidence scoring (base score increased since volume is smoother)
     score = 0.4  # base for shape
     
     # Stronger wedge if converging
     if wedge_symmetric:
-        score += 0.3
+        score += 0.25
     
     # Pre-breakout proximity (price near apex)
     apex_price = (recent_peaks.iloc[-1] + recent_valleys.iloc[-1]) / 2
@@ -73,10 +85,12 @@ def detect_wedge_momentum(df: pd.DataFrame, lookback: int = 40) -> Tuple[bool, f
     if price_proximity > 0.8:
         score += 0.15
     
-    # Volume drying up
-    recent_vol = sub["volume"].tail(10).mean()
-    prior_vol = sub["volume"].tail(30).head(20).mean()
-    if recent_vol < prior_vol * 0.8:
-        score += 0.15
+    # Volume drying up (using 5-candle MA - higher weight since it's more reliable)
+    if vol_drying:
+        score += 0.20
+    else:
+        # Partial credit if volume is at least flat to slightly down
+        if prior_vol_ma > 0 and recent_vol_ma < prior_vol_ma * 1.0:
+            score += 0.05
     
     return True, min(score, 1.0)

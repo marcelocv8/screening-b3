@@ -1,0 +1,24 @@
+# Lista de ativos terminados em "11" para filtro de FIIs
+# Regra: Todo ticker terminado em 11 que NÃO estiver marcado com "# KEEP" será EXCLUÍDO do screening.
+# Se quiser manter algum (ex: BPAC11, KLBN11, SAPR11 que são units de ações, ou ETFs como BOVA11/SMAL11),
+# basta adicionar "# KEEP" no final da linha.
+#
+# ETFs já são tratados separadamente e não precisam estar aqui.
+
+ALUP11
+BITH11       # ETF Bitcoin — adicione # KEEP se quiser manter
+BPAC11       # Unit BTG Pactual — adicione # KEEP se quiser manter
+BRBI11
+BRZP11
+CDII11
+DEFI11
+ETHE11       # ETF Ethereum — adicione # KEEP se quiser manter
+IGTI11       # Unit Iguatemi — adicione # KEEP se quiser manter
+JOGO11
+JURO11
+KLBN11       # Unit Klabin — adicione # KEEP se quiser manter
+PFIN11
+PPEI11
+QDFI11
+SANB11       # Unit Santander — adicione # KEEP se quiser manter
+SAPR11       # Unit Sanepar — adicione # KEEP se quiser manter

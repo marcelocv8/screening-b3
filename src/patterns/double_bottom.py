@@ -6,6 +6,7 @@ from src.core.indicators import get_pivots
 def detect_double_bottom(df: pd.DataFrame) -> Tuple[bool, float]:
     """
     Detect Double Bottom pattern after a significant decline.
+    ENHANCED: Volume at 2nd bottom MUST be lower than 1st bottom (mandatory gate).
     Returns (is_pattern, confidence_score)
     """
     if len(df) < 60:
@@ -60,9 +61,12 @@ def detect_double_bottom(df: pd.DataFrame) -> Tuple[bool, float]:
         if neckline < b1_price * 1.08:
             continue
         
-        # Volume: second bottom ideally lower volume
+        # Volume: second bottom MUST have lower volume than first (MANDATORY gate)
         b1_vol = sub.loc[b1_idx, "volume"] if b1_idx in sub.index else 0
         b2_vol = sub.loc[b2_idx, "volume"] if b2_idx in sub.index else 0
+        
+        if b2_vol >= b1_vol:
+            continue  # Volume gate failed
         
         # Check if breakout happened after second bottom
         after_b2 = sub[sub.index > b2_idx]
@@ -70,10 +74,8 @@ def detect_double_bottom(df: pd.DataFrame) -> Tuple[bool, float]:
             continue
         
         # Scoring
-        score = 0.4
+        score = 0.5  # Higher base since volume gate is strict
         if bottom_diff < 0.03:
-            score += 0.15
-        if b2_vol < b1_vol:
             score += 0.15
         if decline > 0.25:
             score += 0.15
