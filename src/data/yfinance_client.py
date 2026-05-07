@@ -2,6 +2,7 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 import time
+import warnings
 from typing import Optional, List, Dict
 
 class YFinanceClient:
@@ -13,11 +14,13 @@ class YFinanceClient:
         if not symbols:
             return []
         try:
-            data = yf.download(
-                symbols, period="5d", interval="1d",
-                group_by="ticker", auto_adjust=True,
-                progress=False, threads=True, timeout=10
-            )
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                data = yf.download(
+                    symbols, period="5d", interval="1d",
+                    group_by="ticker", auto_adjust=True,
+                    progress=False, threads=True, timeout=10
+                )
             valid = []
             for sym in symbols:
                 if len(symbols) == 1:
@@ -42,11 +45,13 @@ class YFinanceClient:
         for i in range(0, len(symbols), batch_size):
             batch = symbols[i:i+batch_size]
             try:
-                data = yf.download(
-                    batch, period=period, interval=interval,
-                    group_by="ticker", auto_adjust=True,
-                    progress=False, threads=True, timeout=20
-                )
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    data = yf.download(
+                        batch, period=period, interval=interval,
+                        group_by="ticker", auto_adjust=True,
+                        progress=False, threads=True, timeout=20
+                    )
                 
                 if len(batch) == 1:
                     sym = batch[0]

@@ -432,6 +432,8 @@ def run_screening():
     df_results = df_results.sort_values("technical_score", ascending=False).reset_index(drop=True)
     df_results["rank"] = df_results.index + 1
     
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    
     # 6.5 Market Breadth
     print("[5.5/6] Calculating market breadth...")
     from src.core.breadth import calculate_breadth_indicators
@@ -443,7 +445,6 @@ def run_screening():
     ai_opinion = get_ai_opinion(breadth_data, today_str)
     
     # 7. Save
-    today_str = datetime.now().strftime("%Y-%m-%d")
     print("[6/6] Saving...")
     
     json_path = RESULTS_DIR / f"screening_{today_str}.json"

@@ -43,11 +43,12 @@ def is_uptrend(df: pd.DataFrame) -> dict:
     
     last = df.iloc[-1]
     
-    # Ensure numeric values
+    # Ensure numeric values — cast EVERYTHING to float to avoid int/str comparison errors
     close = float(last["close"]) if pd.notna(last["close"]) else 0.0
     sma50 = float(last.get("sma50", 0)) if pd.notna(last.get("sma50", 0)) else 0.0
     sma150 = float(last.get("sma150", 0)) if pd.notna(last.get("sma150", 0)) else 0.0
     sma200 = float(last.get("sma200", 0)) if pd.notna(last.get("sma200", 0)) else 0.0
+    high = float(last["high"]) if pd.notna(last["high"]) else 0.0
     
     # Basic conditions
     price_above_sma50 = close > sma50
@@ -56,18 +57,19 @@ def is_uptrend(df: pd.DataFrame) -> dict:
     sma50_above_sma150 = sma50 > sma150
     sma150_above_sma200 = sma150 > sma200
     
-    # SMA200 rising (last 20 days)
+    # SMA200 rising (last 20 days) — cast to float series
     if len(df) >= 220:
-        sma200_rising = df["sma200"].iloc[-1] > df["sma200"].iloc[-20]
+        sma200_series = pd.to_numeric(df["sma200"], errors="coerce")
+        sma200_rising = float(sma200_series.iloc[-1]) > float(sma200_series.iloc[-20])
     else:
         sma200_rising = False
     
     # Price > 2x SMA200
-    price_double_sma200 = last["close"] > 2 * last.get("sma200", 0) if last.get("sma200", 0) > 0 else False
+    price_double_sma200 = close > 2 * sma200 if sma200 > 0 else False
     
     # Near 52-week high (within 10%)
-    high_52w = df["high"].tail(252).max() if len(df) >= 252 else df["high"].max()
-    near_52w_high = last["close"] >= high_52w * 0.90
+    high_52w = float(df["high"].tail(252).max()) if len(df) >= 252 else float(df["high"].max())
+    near_52w_high = close >= high_52w * 0.90
     
     # RS vs benchmark
     rs = df.get("rs_ratio", pd.Series(np.nan, index=df.index))
@@ -75,10 +77,11 @@ def is_uptrend(df: pd.DataFrame) -> dict:
     rs_uptrend_6m = False
     
     if not rs.isna().all():
-        rs_52w_high = last["rs_ratio"] >= rs.tail(252).max() * 0.98 if len(rs) >= 252 else False
+        rs_last = float(last["rs_ratio"]) if pd.notna(last["rs_ratio"]) else 0.0
+        rs_52w_high = rs_last >= float(rs.tail(252).max()) * 0.98 if len(rs) >= 252 else False
         rs_6m = rs.tail(126) if len(rs) >= 126 else rs
         if len(rs_6m) > 20:
-            rs_uptrend_6m = rs_6m.iloc[-1] > rs_6m.iloc[0]
+            rs_uptrend_6m = float(rs_6m.iloc[-1]) > float(rs_6m.iloc[0])
     
     return {
         "price_above_sma50": price_above_sma50,
