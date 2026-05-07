@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview Layouts — Screening Momentum</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; transition: all 0.3s ease; }
+        
+        /* Switcher */
+        .switcher { position: fixed; top: 0; left: 0; right: 0; background: rgba(0,0,0,0.9); padding: 12px; display: flex; justify-content: center; gap: 12px; z-index: 1000; backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .switcher button { padding: 10px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 13px; transition: all 0.2s; letter-spacing: 0.5px; }
+        .switcher button.active { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+        
+        /* Common */
+        .container { max-width: 1440px; margin: 0 auto; padding: 80px 24px 24px; }
+        .header-bar { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-radius: 12px; margin-bottom: 20px; backdrop-filter: blur(20px); }
+        .header-bar h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+        .header-bar .author { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.6; font-weight: 600; }
+        .header-right { display: flex; gap: 16px; align-items: center; font-size: 12px; }
+        
+        .grid-6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 16px; }
+        .metric-card { padding: 18px 14px; border-radius: 12px; text-align: center; position: relative; overflow: hidden; transition: transform 0.2s; }
+        .metric-card:hover { transform: translateY(-2px); }
+        .metric-card .value { font-size: 28px; font-weight: 800; font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace; letter-spacing: -1px; }
+        .metric-card .label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 6px; font-weight: 700; opacity: 0.7; }
+        .metric-card .trend { font-size: 11px; margin-top: 4px; font-weight: 700; }
+        
+        .breadth-row { display: flex; gap: 16px; margin-bottom: 20px; }
+        .breadth-score { padding: 24px; border-radius: 16px; text-align: center; min-width: 140px; display: flex; flex-direction: column; justify-content: center; }
+        .breadth-score .number { font-size: 48px; font-weight: 800; font-family: monospace; line-height: 1; }
+        .breadth-score .label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-top: 8px; font-weight: 700; opacity: 0.8; }
+        .breadth-info { flex: 1; padding: 20px 24px; border-radius: 16px; }
+        .breadth-info .regime { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+        .breadth-info .stats { font-size: 12px; opacity: 0.8; line-height: 1.8; }
+        .breadth-ai { flex: 1.2; padding: 20px 24px; border-radius: 16px; font-size: 13px; line-height: 1.7; }
+        .breadth-ai strong { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .section-title { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin: 28px 0 14px; opacity: 0.6; }
+        
+        .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+        .tab { padding: 10px 18px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
+        .tab.active { border-width: 1px; border-style: solid; }
+        
+        table { width: 100%; border-collapse: separate; border-spacing: 0; border-radius: 16px; overflow: hidden; font-size: 13px; }
+        th { padding: 14px 16px; text-align: left; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; }
+        td { padding: 14px 16px; border-bottom: 1px solid; }
+        tr:last-child td { border-bottom: none; }
+        
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 800; letter-spacing: 0.5px; }
+        .ticker-name { font-weight: 700; font-size: 14px; }
+        .ticker-sub { font-size: 11px; opacity: 0.6; }
+        .price-mono { font-family: 'SF Mono', Monaco, monospace; font-weight: 700; font-size: 14px; }
+        .score-mono { font-family: 'SF Mono', Monaco, monospace; font-weight: 800; font-size: 14px; }
+        
+        .chart-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 16px; }
+        .chart-card { padding: 40px 20px; border-radius: 16px; text-align: center; font-size: 13px; opacity: 0.7; }
+        
+        .footer { text-align: center; padding: 24px; margin-top: 40px; border-radius: 16px; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; }
+        
+        /* ════════════════════════════════════════
+           OPÇÃO A: TERMINAL BLACK
+           Inspirado no ProfitChart — fundo puro, 
+           números monospaced, verde limão puro
+        ════════════════════════════════════════ */
+        body.theme-a { background-color: #050505; color: #e0e0e0; }
+        body.theme-a .header-bar { background: #0a0a0a; border: 1px solid #1a1a1a; }
+        body.theme-a .metric-card { background: #0f0f0f; border: 1px solid #1a1a1a; }
+        body.theme-a .metric-card .value { color: #00e676; }
+        body.theme-a .metric-card:nth-child(2) .value { color: #ff5252; }
+        body.theme-a .metric-card:nth-child(5) .value { color: #448aff; }
+        body.theme-a .breadth-score { background: #0f0f0f; border: 2px solid #00e676; color: #00e676; }
+        body.theme-a .breadth-info { background: #0f0f0f; border: 1px solid #1a1a1a; }
+        body.theme-a .breadth-ai { background: #0f0f0f; border: 1px solid #1a1a1a; border-left: 3px solid #ffd600; }
+        body.theme-a .tab { background: #0f0f0f; color: #888; border: 1px solid #1a1a1a; }
+        body.theme-a .tab.active { background: #00e676; color: #000; border-color: #00e676; }
+        body.theme-a table { background: #0f0f0f; border: 1px solid #1a1a1a; }
+        body.theme-a th { background: #141414; color: #666; border-bottom: 1px solid #222; }
+        body.theme-a td { border-color: #1a1a1a; }
+        body.theme-a tr:hover td { background: rgba(0,230,118,0.04); }
+        body.theme-a .chart-card { background: #0f0f0f; border: 1px solid #1a1a1a; }
+        body.theme-a .footer { background: #0a0a0a; border: 1px solid #1a1a1a; color: #555; }
+        body.theme-a .switcher { background: #0a0a0a; border-color: #1a1a1a; }
+        body.theme-a .switcher button { background: #141414; color: #888; border: 1px solid #222; }
+        body.theme-a .switcher button.active { background: #00e676; color: #000; }
+        
+        /* ════════════════════════════════════════
+           OPÇÃO B: GLASS QUANT
+           Inspirado no Quantzed — glassmorphism,
+           azul profundo, ciano neon
+        ════════════════════════════════════════ */
+        body.theme-b { background-color: #020617; color: #cbd5e1; }
+        body.theme-b .header-bar { background: rgba(15,23,42,0.6); border: 1px solid rgba(51,65,85,0.4); backdrop-filter: blur(20px); }
+        body.theme-b .metric-card { background: rgba(30,41,59,0.5); border: 1px solid rgba(51,65,85,0.3); backdrop-filter: blur(10px); }
+        body.theme-b .metric-card .value { color: #22d3ee; text-shadow: 0 0 20px rgba(34,211,238,0.3); }
+        body.theme-b .metric-card:nth-child(2) .value { color: #f472b6; text-shadow: 0 0 20px rgba(244,114,182,0.3); }
+        body.theme-b .metric-card:nth-child(5) .value { color: #a78bfa; }
+        body.theme-b .breadth-score { background: rgba(30,41,59,0.6); border: 2px solid #22d3ee; color: #22d3ee; backdrop-filter: blur(10px); }
+        body.theme-b .breadth-info { background: rgba(30,41,59,0.5); border: 1px solid rgba(51,65,85,0.3); backdrop-filter: blur(10px); }
+        body.theme-b .breadth-ai { background: rgba(30,41,59,0.5); border: 1px solid rgba(51,65,85,0.3); border-left: 3px solid #fbbf24; backdrop-filter: blur(10px); }
+        body.theme-b .tab { background: rgba(30,41,59,0.4); color: #64748b; border: 1px solid rgba(51,65,85,0.3); }
+        body.theme-b .tab.active { background: rgba(34,211,238,0.15); color: #22d3ee; border-color: #22d3ee; }
+        body.theme-b table { background: rgba(30,41,59,0.4); border: 1px solid rgba(51,65,85,0.3); backdrop-filter: blur(10px); }
+        body.theme-b th { background: rgba(51,65,85,0.3); color: #64748b; }
+        body.theme-b td { border-color: rgba(51,65,85,0.3); }
+        body.theme-b tr:hover td { background: rgba(34,211,238,0.06); }
+        body.theme-b .chart-card { background: rgba(30,41,59,0.4); border: 1px solid rgba(51,65,85,0.3); backdrop-filter: blur(10px); }
+        body.theme-b .footer { background: rgba(15,23,42,0.6); border: 1px solid rgba(51,65,85,0.3); color: #475569; backdrop-filter: blur(10px); }
+        body.theme-b .switcher { background: rgba(2,6,23,0.95); border-color: rgba(51,65,85,0.3); }
+        body.theme-b .switcher button { background: rgba(30,41,59,0.5); color: #64748b; border: 1px solid rgba(51,65,85,0.3); }
+        body.theme-b .switcher button.active { background: #22d3ee; color: #020617; }
+        
+        /* ════════════════════════════════════════
+           OPÇÃO C: DEEP OCEAN
+           Mistura escura com gradientes sutis,
+           verde neon, vermelho coral, dourado
+        ════════════════════════════════════════ */
+        body.theme-c { background-color: #0c1222; color: #dbeafe; }
+        body.theme-c .header-bar { background: linear-gradient(135deg, #111827 0%, #1e1b4b 100%); border: 1px solid rgba(99,102,241,0.2); }
+        body.theme-c .metric-card { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); border: 1px solid rgba(99,102,241,0.15); }
+        body.theme-c .metric-card .value { color: #4ade80; text-shadow: 0 0 15px rgba(74,222,128,0.4); }
+        body.theme-c .metric-card:nth-child(2) .value { color: #fb7185; text-shadow: 0 0 15px rgba(251,113,133,0.4); }
+        body.theme-c .metric-card:nth-child(5) .value { color: #60a5fa; }
+        body.theme-c .breadth-score { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); border: 2px solid #4ade80; color: #4ade80; }
+        body.theme-c .breadth-info { background: linear-gradient(135deg, #1e1b4b 0%, #1e293b 100%); border: 1px solid rgba(99,102,241,0.15); }
+        body.theme-c .breadth-ai { background: linear-gradient(135deg, #1e1b4b 0%, #1e293b 100%); border: 1px solid rgba(99,102,241,0.15); border-left: 3px solid #fbbf24; }
+        body.theme-c .tab { background: rgba(30,27,75,0.5); color: #64748b; border: 1px solid rgba(99,102,241,0.15); }
+        body.theme-c .tab.active { background: rgba(74,222,128,0.1); color: #4ade80; border-color: #4ade80; }
+        body.theme-c table { background: rgba(30,27,75,0.3); border: 1px solid rgba(99,102,241,0.15); }
+        body.theme-c th { background: rgba(49,46,129,0.4); color: #818cf8; }
+        body.theme-c td { border-color: rgba(99,102,241,0.1); }
+        body.theme-c tr:hover td { background: rgba(74,222,128,0.05); }
+        body.theme-c .chart-card { background: rgba(30,27,75,0.3); border: 1px solid rgba(99,102,241,0.15); }
+        body.theme-c .footer { background: linear-gradient(135deg, #111827 0%, #1e1b4b 100%); border: 1px solid rgba(99,102,241,0.15); color: #6366f1; }
+        body.theme-c .switcher { background: #0c1222; border-color: rgba(99,102,241,0.2); }
+        body.theme-c .switcher button { background: rgba(30,27,75,0.5); color: #64748b; border: 1px solid rgba(99,102,241,0.2); }
+        body.theme-c .switcher button.active { background: #4ade80; color: #0c1222; }
+    </style>
+</head>
+<body class="theme-a">
+    <div class="switcher">
+        <button class="active" onclick="setTheme('a')">🖥️ A — Terminal Black</button>
+        <button onclick="setTheme('b')">💎 B — Glass Quant</button>
+        <button onclick="setTheme('c')">🌊 C — Deep Ocean</button>
+    </div>
+    
+    <div class="container">
+        <!-- Header -->
+        <div class="header-bar">
+            <div>
+                <h1>🚀 Screening Momentum</h1>
+                <div class="author">Marcelo Vasconcelos — Minervini + Qullamaggie</div>
+            </div>
+            <div class="header-right">
+                <span>📅 Diário</span>
+                <span>⏰ 16:20 BRT</span>
+                <span>📊 2025-01-15</span>
+            </div>
+        </div>
+        
+        <!-- Market Breadth -->
+        <div class="breadth-row">
+            <div class="breadth-score">
+                <div class="number">4</div>
+                <div class="label">Alocação<br>60-80%</div>
+            </div>
+            <div class="breadth-info">
+                <div class="regime">Mercado Positivo — Moderado</div>
+                <div class="stats">
+                    % acima MME50: <strong>68%</strong> &nbsp;|&nbsp;
+                    % acima MME200: <strong>54%</strong> &nbsp;|&nbsp;
+                    Breakouts: <strong>12</strong> &nbsp;|&nbsp;
+                    VCPs: <strong>8</strong>
+                </div>
+            </div>
+            <div class="breadth-ai">
+                <strong>🤖 Parecer da IA</strong><br>
+                Mercado mostra resiliência com rotacionamento saudável entre setores. Risco de volatilidade próximo ao FOMC em 3 dias — sugerir cautela parcial e hedge em posições maiores.
+            </div>
+        </div>
+        
+        <!-- Metrics -->
+        <div class="grid-6">
+            <div class="metric-card">
+                <div class="value">464</div>
+                <div class="label">Filtrados</div>
+                <div class="trend">+12 vs ontem</div>
+            </div>
+            <div class="metric-card">
+                <div class="value">22</div>
+                <div class="label">Tier S</div>
+                <div class="trend">+3 vs ontem</div>
+            </div>
+            <div class="metric-card">
+                <div class="value">193</div>
+                <div class="label">Tier A</div>
+                <div class="trend">+8 vs ontem</div>
+            </div>
+            <div class="metric-card">
+                <div class="value">18</div>
+                <div class="label">VCPs</div>
+                <div class="trend">+2 vs ontem</div>
+            </div>
+            <div class="metric-card">
+                <div class="value">9</div>
+                <div class="label">Wedges</div>
+                <div class="trend">—</div>
+            </div>
+            <div class="metric-card">
+                <div class="value">15</div>
+                <div class="label">Breakouts</div>
+                <div class="trend">+5 vs ontem</div>
+            </div>
+        </div>
+        
+        <!-- Tabs -->
+        <div class="section-title">📌 Padrões Detectados — Diário</div>
+        <div class="tabs">
+            <div class="tab active">🔥 Breakouts</div>
+            <div class="tab">🌀 VCPs</div>
+            <div class="tab">🏆 Cup & Handle</div>
+            <div class="tab">🔺 Wedges</div>
+            <div class="tab">⬆️ Double Bottom</div>
+            <div class="tab">👤 Inverse H&S</div>
+        </div>
+        
+        <!-- Table -->
+        <div class="section-title">🏆 Ranking Geral</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Ativo</th>
+                    <th>Tier</th>
+                    <th>Score</th>
+                    <th>Fund.</th>
+                    <th>Preço</th>
+                    <th>Padrões</th>
+                    <th>ROE</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="score-mono">1</td>
+                    <td>
+                        <div class="ticker-name">PETR4</div>
+                        <div class="ticker-sub">Petrobras PN</div>
+                    </td>
+                    <td><span class="badge" style="background:#00e67620; color:#00e676; border:1px solid #00e67640;">S</span></td>
+                    <td class="score-mono">15.20</td>
+                    <td><span class="badge" style="background:#00e67620; color:#00e676;">FORTE</span></td>
+                    <td class="price-mono">R$ 38.50</td>
+                    <td>🌀 VCP(85%) | 🔥 BREAKOUT</td>
+                    <td class="score-mono" style="color:#00e676;">22.4%</td>
+                </tr>
+                <tr>
+                    <td class="score-mono">2</td>
+                    <td>
+                        <div class="ticker-name">VALE3</div>
+                        <div class="ticker-sub">Vale ON</div>
+                    </td>
+                    <td><span class="badge" style="background:#00e67620; color:#00e676; border:1px solid #00e67640;">S</span></td>
+                    <td class="score-mono">14.80</td>
+                    <td><span class="badge" style="background:#00e67620; color:#00e676;">FORTE</span></td>
+                    <td class="price-mono">R$ 62.10</td>
+                    <td>🔺 WEDGE(72%) | ⏳ PRE-BO</td>
+                    <td class="score-mono" style="color:#00e676;">18.1%</td>
+                </tr>
+                <tr>
+                    <td class="score-mono">3</td>
+                    <td>
+                        <div class="ticker-name">WEGE3</div>
+                        <div class="ticker-sub">WEG ON</div>
+                    </td>
+                    <td><span class="badge" style="background:#ffd60020; color:#ffd600; border:1px solid #ffd60040;">A</span></td>
+                    <td class="score-mono">12.30</td>
+                    <td><span class="badge" style="background:#00e67620; color:#00e676;">FORTE</span></td>
+                    <td class="price-mono">R$ 28.90</td>
+                    <td>🏆 C&H(68%)</td>
+                    <td class="score-mono" style="color:#00e676;">24.5%</td>
+                </tr>
+                <tr>
+                    <td class="score-mono">4</td>
+                    <td>
+                        <div class="ticker-name">PRIO3</div>
+                        <div class="ticker-sub">Petro Rio ON</div>
+                    </td>
+                    <td><span class="badge" style="background:#ffd60020; color:#ffd600; border:1px solid #ffd60040;">A</span></td>
+                    <td class="score-mono">11.70</td>
+                    <td><span class="badge" style="background:#ffd60020; color:#ffd600;">OK</span></td>
+                    <td class="price-mono">R$ 45.20</td>
+                    <td>🌀 VCP(78%) | 🔥 BREAKOUT</td>
+                    <td class="score-mono" style="color:#ffd600;">15.2%</td>
+                </tr>
+                <tr>
+                    <td class="score-mono">5</td>
+                    <td>
+                        <div class="ticker-name">BOVA11</div>
+                        <div class="ticker-sub">iShares Ibovespa</div>
+                    </td>
+                    <td><span class="badge" style="background:#448aff20; color:#448aff; border:1px solid #448aff40;">B</span></td>
+                    <td class="score-mono">8.50</td>
+                    <td><span class="badge" style="background:#ff525220; color:#ff5252;">FRACO</span></td>
+                    <td class="price-mono">R$ 112.40</td>
+                    <td>—</td>
+                    <td class="score-mono">—</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <!-- Charts -->
+        <div class="section-title">📊 Visualizações</div>
+        <div class="chart-grid">
+            <div class="chart-card">[ Gráfico — Distribuição por Tier ]</div>
+            <div class="chart-card">[ Gráfico — Padrões Detectados ]</div>
+            <div class="chart-card">[ Gráfico — Fundamentals ]</div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            © Marcelo Vasconcelos | Screening Momentum v3.0 | screening-b3.streamlit.app
+        </div>
+    </div>
+    
+    <script>
+        function setTheme(theme) {
+            document.body.className = 'theme-' + theme;
+            document.querySelectorAll('.switcher button').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

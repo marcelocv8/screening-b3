@@ -181,13 +181,7 @@ def preflight_filter(universe: pd.DataFrame, yf_client: YFinanceClient) -> pd.Da
     """Quick validation: remove tickers that yfinance can't find at all."""
     print("[2/6] Preflight validation (quick existence check)...")
     
-    # Sample tickers for validation - check first 10 from each category
-    to_check = []
-    for cat in ["BR_STOCK", "ETF", "BDR"]:
-        sample = universe[universe["category"] == cat]["analysis_ticker"].head(10).tolist()
-        to_check.extend(sample)
-    
-    # Actually, let's validate all BDRs since they're most likely to fail
+    # Validate BDRs first
     bdr_tickers = universe[universe["category"] == "BDR"]["analysis_ticker"].tolist()
     if bdr_tickers:
         print(f"  Validating {len(bdr_tickers)} BDRs...")
@@ -198,6 +192,19 @@ def preflight_filter(universe: pd.DataFrame, yf_client: YFinanceClient) -> pd.Da
             universe = universe[~(
                 (universe["category"] == "BDR") & 
                 universe["analysis_ticker"].isin(invalid_bdrs)
+            )]
+    
+    # Validate BR stocks and ETFs - CRITICAL to avoid batch corruption
+    br_etf_tickers = universe[universe["category"].isin(["BR_STOCK", "ETF"])]["analysis_ticker"].tolist()
+    if br_etf_tickers:
+        print(f"  Validating {len(br_etf_tickers)} BR stocks/ETFs...")
+        valid_br = yf_client.validate_tickers(br_etf_tickers)
+        invalid_br = set(br_etf_tickers) - set(valid_br)
+        if invalid_br:
+            print(f"  Removing {len(invalid_br)} invalid BR tickers: {list(invalid_br)[:5]}...")
+            universe = universe[~(
+                universe["category"].isin(["BR_STOCK", "ETF"]) & 
+                universe["analysis_ticker"].isin(invalid_br)
             )]
     
     print(f"[2/6] Universe after preflight: {len(universe)} tickers")
@@ -227,10 +234,24 @@ def process_batch(universe: pd.DataFrame, yf_client: YFinanceClient,
     br_weekly = yf_client.batch_download(br_tickers, period="3y", interval="1wk")
     bdr_weekly = yf_client.batch_download(bdr_tickers, period="3y", interval="1wk")
     
-    # Process results
+    # DEBUG: Track category counts
     print("[4/6] Processing and scoring...")
+    print(f"  DEBUG: Universe categories: {universe['category'].value_counts().to_dict()}")
+    print(f"  DEBUG: br_data keys sample: {list(br_data.keys())[:5]}")
+    print(f"  DEBUG: bdr_data keys sample: {list(bdr_data.keys())[:5]}")
+    print(f"  DEBUG: br_data has {len(br_data)} entries, bdr_data has {len(bdr_data)} entries")
+    
+    # Count tickers in br_data by looking up universe tickers
+    br_in_universe = universe[universe["category"].isin(["BR_STOCK", "ETF"])]["analysis_ticker"].tolist()
+    bdr_in_universe = universe[universe["category"] == "BDR"]["analysis_ticker"].tolist()
+    br_found = sum(1 for t in br_in_universe if t in br_data)
+    bdr_found = sum(1 for t in bdr_in_universe if t in bdr_data)
+    print(f"  DEBUG: BR tickers in universe: {len(br_in_universe)}, found in br_data: {br_found}")
+    print(f"  DEBUG: BDR tickers in universe: {len(bdr_in_universe)}, found in bdr_data: {bdr_found}")
+    
     results = []
     total = len(universe)
+    category_counts = {"processed": 0, "skipped": 0, "by_category": {}}
     
     for idx, row in universe.iterrows():
         if idx % 100 == 0:
@@ -244,14 +265,26 @@ def process_batch(universe: pd.DataFrame, yf_client: YFinanceClient,
         df_daily = br_data.get(analysis_ticker, pd.DataFrame()) if category != "BDR" else bdr_data.get(analysis_ticker, pd.DataFrame())
         df_weekly = br_weekly.get(analysis_ticker, pd.DataFrame()) if category != "BDR" else bdr_weekly.get(analysis_ticker, pd.DataFrame())
         
+        # DEBUG: Show first few skipped tickers
         if df_daily.empty or len(df_daily) < 50:
+            category_counts["skipped"] = category_counts.get("skipped", 0) + 1
+            category_counts["by_category"][category] = category_counts["by_category"].get(category, 0) + 1
+            if len(results) == 0 and idx < 20:
+                print(f"  DEBUG SKIP {category} {analysis_ticker}: empty={df_daily.empty}, len={len(df_daily)}")
             continue
+        
+        category_counts["processed"] = category_counts.get("processed", 0) + 1
         
         # Calculate indicators
         df_daily = calculate_ma(df_daily, [50, 150, 200])
         
-        # Volume financeiro
+        # Volume financeiro - skip if close is NaN
         last_close = df_daily.iloc[-1]["close"]
+        if pd.isna(last_close):
+            category_counts["skipped"] = category_counts.get("skipped", 0) + 1
+            category_counts["by_category"][category] = category_counts["by_category"].get(category, 0) + 1
+            continue
+        
         last_volume = df_daily.iloc[-1]["volume"]
         volume_financeiro = last_close * last_volume
         
@@ -365,6 +398,9 @@ def process_batch(universe: pd.DataFrame, yf_client: YFinanceClient,
             "pvp": fundamentals.get("pvp", 0),
         }
         results.append(record)
+    
+    print(f"  DEBUG: Processed {category_counts['processed']}, Skipped {category_counts['skipped']}")
+    print(f"  DEBUG: Skip by category: {category_counts['by_category']}")
     
     return results
 
