@@ -41,6 +41,7 @@ jobs:
       run: python run_screening.py
       env:
         BRAPI_TOKEN: ${{ secrets.BRAPI_TOKEN }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
     
     - name: Commit and push results
       run: |
@@ -51,16 +52,12 @@ jobs:
     
     - name: Cleanup old results (keep last 5)
       run: |
-        # Remove screening files older than the 5 most recent
-        for ext in parquet json csv; do
-          files=$(ls -t results/screening_*.$ext 2>/dev/null | tail -n +6)
+        # Remove screening files older than the 5 most recent (sorted by filename, deterministic)
+        for ext in json csv; do
+          files=$(ls -1 results/screening_*.$ext 2>/dev/null | sort -r | tail -n +6)
           if [ -n "$files" ]; then
             echo "$files" | xargs -r git rm
           fi
         done
-        # Also remove summary.json if there are old ones (keep latest)
-        old_summary=$(ls -t results/summary.json 2>/dev/null | tail -n +2)
-        if [ -n "$old_summary" ]; then
-          echo "$old_summary" | xargs -r git rm
-        fi
+        # latest.parquet is always overwritten, no cleanup needed
         git diff --staged --quiet || (git commit -m "Cleanup old results" && git push)

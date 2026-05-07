@@ -2,7 +2,7 @@ name: Keep Streamlit Alive
 
 on:
   schedule:
-    - cron: '0 12 */2 * *'  # Every 2 days at 12:00 UTC
+    - cron: '0 12 1,15 * *'  # Days 1 and 15 of every month at 12:00 UTC
   workflow_dispatch:
 
 jobs:
