@@ -1,15 +1,15 @@
 {
   "date": "2026-05-08",
-  "qualified": 1379,
-  "tier_s": 80,
+  "qualified": 1380,
+  "tier_s": 79,
   "tier_a": 437,
-  "tier_b": 349,
+  "tier_b": 348,
   "breakouts": 22,
   "vcps": 12,
   "wedges": 0,
-  "fund_strong": 234,
-  "fund_ok": 298,
-  "fund_weak": 847,
+  "fund_strong": 219,
+  "fund_ok": 283,
+  "fund_weak": 878,
   "allocation_score": 3,
   "regime": "Neutro \u2014 Cauteloso"
 }
