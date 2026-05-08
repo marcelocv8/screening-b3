@@ -1,13 +1,12 @@
 """
-AI Daily Opinion using Google Gemini API.
-Analyzes market breadth, calendar events, and generates a Portuguese opinion.
+AI Daily Opinion using Google GenAI (nova SDK).
+Analisa market breadth e gera parecer em português.
 """
 import os
-import json
 from typing import Dict, Any
 
 try:
-    import google.generativeai as genai
+    from google import genai
     HAS_GENAI = True
 except ImportError:
     HAS_GENAI = False
@@ -23,12 +22,13 @@ def get_ai_opinion(breadth_data: Dict[str, Any], date_str: str) -> Dict[str, Any
         return _fallback_opinion(breadth_data, date_str)
     
     try:
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        
+        client = genai.Client(api_key=api_key)
         prompt = _build_prompt(breadth_data, date_str)
         
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=prompt
+        )
         text = response.text if response and hasattr(response, "text") else ""
         
         return {
@@ -36,7 +36,7 @@ def get_ai_opinion(breadth_data: Dict[str, Any], date_str: str) -> Dict[str, Any
             "opinion": text.strip(),
             "allocation_score": breadth_data.get("allocation_score", 3),
             "regime": breadth_data.get("regime", "Neutro"),
-            "source": "gemini-1.5-flash",
+            "source": "gemini-2.0-flash",
             "has_ai": True,
         }
     except Exception as e:
@@ -61,13 +61,13 @@ DADOS DO MERCADO BRASILEIRO ({date}):
 
 TAREFA:
 1. Dê um parecer em 2-3 parágrafos sobre o regime de mercado atual.
-2. Identifique riscos exógenos ou eventos que possam aumentar a incerteza (ex: FOMC próximo, decisão do BCB, tensões geopolíticas, commodities, surpresas macro).
+2. Identifique riscos exógenos ou eventos que possam aumentar a incerteza.
 3. Seja direto e pragmático. Não use linguagem corporativa genérica.
-4. Conclua com uma recomendação de alocação em ações baseada no score acima.
+4. Conclua com uma recomendação de alocação em ações.
 
 FORMATO:
 - Parecer:
-[seu texto aqui]
+[seu texto]
 
 - Riscos e Eventos:
 [lista breve]
