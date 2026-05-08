@@ -30,7 +30,7 @@ def calculate_atr(df: pd.DataFrame, period: int = 14) -> pd.Series:
 
 def relative_strength(prices: pd.Series, benchmark: pd.Series) -> pd.Series:
     """Calculate relative strength ratio (stock / benchmark)."""
-    # Strip timezone to avoid mismatch (only if DatetimeIndex)
+    # Strip timezone only if DatetimeIndex (RangeIndex has no .tz)
     prices_tz = prices.copy()
     benchmark_tz = benchmark.copy()
     if hasattr(prices_tz.index, 'tz') and prices_tz.index.tz is not None:
