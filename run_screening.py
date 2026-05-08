@@ -326,12 +326,12 @@ def process_batch(universe: pd.DataFrame, yf_client: YFinanceClient,
                     "pvp": _parse_float(r.get("pvp", "0")),
                 }
         
-        # Score DAILY
+         # Score DAILY
         try:
             score_result = score_stock(
                 df_daily, df_weekly,
                 fundamentals=fundamentals,
-                avg_volume_financeiro=volume_financeiro
+                avg_volume_financeiro=volume_financeiro  # já é o médio agora
             )
         except Exception as e:
             print(f"  [SKIP] {ticker}: scoring error: {e}")
