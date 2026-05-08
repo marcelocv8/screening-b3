@@ -4,6 +4,8 @@ from typing import Tuple, Optional
 
 def calculate_ma(df: pd.DataFrame, periods: list = [50, 150, 200], col: str = "close") -> pd.DataFrame:
     """Calculate simple moving averages."""
+    # Ensure column is numeric before rolling
+    df[col] = pd.to_numeric(df[col], errors="coerce")
     for p in periods:
         df[f"sma{p}"] = df[col].rolling(window=p, min_periods=p//2).mean()
     return df
