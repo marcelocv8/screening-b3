@@ -285,15 +285,13 @@ def process_batch(universe: pd.DataFrame, yf_client: YFinanceClient,
             category_counts["by_category"][category] = category_counts["by_category"].get(category, 0) + 1
             continue
         
-        last_volume = df_daily.iloc[-1]["volume"]
-        if pd.isna(last_volume):
+      # Use average volume (last 20 days) to handle partial trading days
+        avg_volume = df_daily["volume"].tail(20).mean()
+        volume_financeiro = last_close * avg_volume
+        
+        if pd.isna(volume_financeiro) or volume_financeiro < MIN_LIQUIDEZ:
             category_counts["skipped"] = category_counts.get("skipped", 0) + 1
             category_counts["by_category"][category] = category_counts["by_category"].get(category, 0) + 1
-            continue
-        
-        volume_financeiro = last_close * last_volume
-        
-        if volume_financeiro < MIN_LIQUIDEZ:
             continue
         
         # RS vs IBOV
