@@ -54,8 +54,17 @@ def detect_inverse_head_shoulders(df: pd.DataFrame) -> Tuple[bool, float]:
             continue
         
         # Time symmetry
-        t1 = sub.index.get_loc(head_idx) - sub.index.get_loc(ls_idx)
-        t2 = sub.index.get_loc(rs_idx) - sub.index.get_loc(head_idx)
+        loc_ls = sub.index.get_loc(ls_idx)
+        loc_head = sub.index.get_loc(head_idx)
+        loc_rs = sub.index.get_loc(rs_idx)
+        # Handle duplicate indices gracefully
+        for loc in [loc_ls, loc_head, loc_rs]:
+            if isinstance(loc, slice):
+                loc = loc.start if loc.start is not None else loc.stop
+        if not all(isinstance(loc, (int, np.integer)) for loc in [loc_ls, loc_head, loc_rs]):
+            continue
+        t1 = int(loc_head) - int(loc_ls)
+        t2 = int(loc_rs) - int(loc_head)
         if t1 == 0 or t2 == 0:
             continue
         time_symmetry = abs(t1 - t2) / ((t1 + t2) / 2)

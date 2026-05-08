@@ -62,8 +62,7 @@ def detect_cup_and_handle(df_weekly: pd.DataFrame) -> Tuple[bool, float]:
         handle_data = sub[sub.index > right_peak_idx]
         if len(handle_data) < 1 or len(handle_data) > 6:
             # Handle should be 1-4 weeks
-            if len(handle_data) > 6:
-                continue
+            continue
         
         if len(handle_data) > 0:
             handle_low = handle_data["low"].min()

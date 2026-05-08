@@ -30,7 +30,14 @@ def calculate_atr(df: pd.DataFrame, period: int = 14) -> pd.Series:
 
 def relative_strength(prices: pd.Series, benchmark: pd.Series) -> pd.Series:
     """Calculate relative strength ratio (stock / benchmark)."""
-    return prices / benchmark.reindex(prices.index).ffill()
+    # Strip timezone to avoid mismatch
+    prices_tz = prices.copy()
+    benchmark_tz = benchmark.copy()
+    if prices_tz.index.tz is not None:
+        prices_tz.index = prices_tz.index.tz_localize(None)
+    if benchmark_tz.index.tz is not None:
+        benchmark_tz.index = benchmark_tz.index.tz_localize(None)
+    return prices_tz / benchmark_tz.reindex(prices_tz.index).ffill()
 
 def is_uptrend(df: pd.DataFrame) -> dict:
     """Check Minervini Trend Template conditions."""

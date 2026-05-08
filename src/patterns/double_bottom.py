@@ -40,7 +40,16 @@ def detect_double_bottom(df: pd.DataFrame) -> Tuple[bool, float]:
         b2_price = valleys.iloc[i + 1]
         
         # Distance between bottoms
-        days_between = sub.index.get_loc(b2_idx) - sub.index.get_loc(b1_idx)
+        loc_b1 = sub.index.get_loc(b1_idx)
+        loc_b2 = sub.index.get_loc(b2_idx)
+        # Handle duplicate indices gracefully
+        if isinstance(loc_b1, slice):
+            loc_b1 = loc_b1.start if loc_b1.start is not None else loc_b1.stop
+        if isinstance(loc_b2, slice):
+            loc_b2 = loc_b2.start if loc_b2.start is not None else loc_b2.stop
+        if not isinstance(loc_b1, (int, np.integer)) or not isinstance(loc_b2, (int, np.integer)):
+            continue
+        days_between = int(loc_b2) - int(loc_b1)
         if not (15 <= days_between <= 120):
             continue
         

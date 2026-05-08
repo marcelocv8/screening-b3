@@ -82,16 +82,29 @@ df, summary, breadth, ai_opinion = load_data()
 # ═══════════════════════════════════════════════════════════════
 # HEADER
 # ═══════════════════════════════════════════════════════════════
-st.title("🚀 Screening B3")
+st.title("📈 Screening B3")
 
 if df.empty:
     st.warning("Nenhum resultado encontrado. O screening ainda não foi executado.")
     st.info("O screening roda automaticamente às 16:20 (BRT) em dias úteis via GitHub Actions.")
     st.stop()
 
+# Responsive CSS for mobile
+st.markdown("""
+<style>
+    .stDataFrame { font-size: 12px !important; }
+    @media (max-width: 768px) {
+        .stDataFrame { font-size: 10px !important; }
+        h1 { font-size: 1.5rem !important; }
+        h2 { font-size: 1.2rem !important; }
+        h3 { font-size: 1.0rem !important; }
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # Toggle timeframe
 st.markdown("---")
-timeframe = st.segmented_control("Timeframe", ["📅 Diário", "📆 Semanal"], default="📅 Diário")
+timeframe = st.radio("Timeframe", ["📅 Diário", "📆 Semanal"], horizontal=True)
 use_weekly = (timeframe == "📆 Semanal")
 
 score_col = "technical_score_weekly" if use_weekly else "technical_score"
@@ -117,13 +130,12 @@ if breadth:
     score_colors = {5: "#2ca02c", 4: "#7cb342", 3: "#ffbb33", 2: "#ff7043", 1: "#d62728"}
     score_color = score_colors.get(alloc_score, "#ffbb33")
     
-    hcol1, hcol2, hcol3 = st.columns([1.1, 1.7, 2.0])
+    # Mobile-friendly: stack columns on small screens
+    hcol1, hcol2 = st.columns([1, 1])
     
     with hcol1:
         st.metric("Alocação", f"{alloc_score}/5", alloc_pct)
         st.markdown(f"<div style='color:{score_color}; font-weight:bold; font-size:14px;'>{regime}</div>", unsafe_allow_html=True)
-    
-    with hcol2:
         st.markdown(f"**Market Breadth:**")
         st.markdown(f"""
         - % acima MME50: **{breadth.get('pct_above_sma50', 0)}%**
@@ -132,7 +144,7 @@ if breadth:
         - Sinais hoje: **{total_signals}** (média: {avg_signals:.1f} | vs média: {signal_vs_avg:.2f}x)
         """)
     
-    with hcol3:
+    with hcol2:
         if ai_opinion and ai_opinion.get("opinion"):
             source_icon = "🤖" if ai_opinion.get("has_ai") else "⚠️"
             source_label = "Gemini" if ai_opinion.get("has_ai") else "Fallback"
@@ -143,21 +155,22 @@ if breadth:
             st.info("Parecer da IA não disponível.")
 
 # ═══════════════════════════════════════════════════════════════
-# METRICS
+# METRICS - Mobile friendly (2-3 cols instead of 6)
 # ═══════════════════════════════════════════════════════════════
 st.markdown("---")
-col1, col2, col3, col4, col5, col6 = st.columns(6)
+# Use 3 columns for better mobile experience
+col1, col2, col3 = st.columns(3)
 col1.metric("Total", len(df))
 col2.metric("Tier S", int((df[tier_col] == "S").sum()))
 col3.metric("Tier A", int((df[tier_col] == "A").sum()))
 
 vcp_total = int(df[f"vcp{pattern_suffix}"].sum()) if f"vcp{pattern_suffix}" in df.columns else int(df["vcp"].sum())
-col4.metric("VCPs", vcp_total)
-
 wedge_total = int(df[f"wedge{pattern_suffix}"].sum()) if f"wedge{pattern_suffix}" in df.columns else int(df["wedge"].sum())
-col5.metric("Wedges", wedge_total)
-
 bo_total = int(df[f"breakout{pattern_suffix}"].sum()) if f"breakout{pattern_suffix}" in df.columns else int(df["breakout"].sum())
+
+col4, col5, col6 = st.columns(3)
+col4.metric("VCPs", vcp_total)
+col5.metric("Wedges", wedge_total)
 col6.metric("Breakouts 🔥", bo_total)
 
 # ═══════════════════════════════════════════════════════════════
@@ -200,6 +213,7 @@ with pat_tab6:
 st.markdown("---")
 st.subheader("🏆 Ranking Geral" + (" — Semanal" if use_weekly else " — Diário"))
 
+# Use a more compact display for mobile
 display_df = df[["rank", "display", "name", "category", tier_col, score_col,
                  "fundamental_tag", "fundamental_score", "price",
                  "vcp", "wedge", "cup_handle", "double_bottom", "inverse_hs",

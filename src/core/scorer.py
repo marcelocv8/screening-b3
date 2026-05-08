@@ -116,7 +116,7 @@ def score_technical(df_daily: pd.DataFrame, df_weekly: pd.DataFrame,
     # 4. Pre-breakout proximity
     recent_high = df_daily["high"].tail(20).max()
     last_close = df_daily.iloc[-1]["close"]
-    if last_close >= recent_high * 0.95 and last_close < recent_high * 1.02:
+    if pd.notna(recent_high) and pd.notna(last_close) and last_close >= recent_high * 0.95 and last_close < recent_high * 1.02:
         score += TECH_WEIGHTS["pre_breakout"]
         details["patterns"]["pre_breakout"] = True
     else:
