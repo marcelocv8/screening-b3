@@ -47,21 +47,21 @@ def load_data():
 def get_pattern_badges(row, weekly=False):
     suffix = "_weekly" if weekly else ""
     badges = []
+    if row.get(f"wedge_or_trend{suffix}"):
+        conf = row.get(f"wedge_or_trend{suffix}_conf", row.get("wedge_or_trend_conf", 0))
+        badges.append(f"🔥 WEDGE/TREND({conf:.0%})")
     if row.get(f"vcp{suffix}"):
         conf = row.get(f"vcp{suffix}_conf", row.get("vcp_conf", 0))
         badges.append(f"🌀 VCP({conf:.0%})")
     if row.get(f"wedge{suffix}"):
         conf = row.get(f"wedge{suffix}_conf", row.get("wedge_conf", 0))
-        badges.append(f"🔺 WEDGE({conf:.0%})")
+        badges.append(f"🔺 WEDGE CLÁSSICO({conf:.0%})")
     if row.get(f"cup_handle{suffix}"):
         conf = row.get(f"cup_handle{suffix}_conf", row.get("cup_handle_conf", 0))
         badges.append(f"🏆 C&H({conf:.0%})")
     if row.get(f"double_bottom{suffix}"):
         conf = row.get(f"double_bottom{suffix}_conf", row.get("double_bottom_conf", 0))
         badges.append(f"⬆️ DB({conf:.0%})")
-    if row.get(f"inverse_hs{suffix}"):
-        conf = row.get(f"inverse_hs{suffix}_conf", row.get("inverse_hs_conf", 0))
-        badges.append(f"👤 IH&S({conf:.0%})")
     if row.get(f"pre_breakout{suffix}"):
         badges.append("⏳ PRE-BO")
     if row.get(f"breakout{suffix}"):
@@ -164,13 +164,14 @@ col1.metric("Total", len(df))
 col2.metric("Tier S", int((df[tier_col] == "S").sum()))
 col3.metric("Tier A", int((df[tier_col] == "A").sum()))
 
+wot_total = int(df[f"wedge_or_trend{pattern_suffix}"].sum()) if f"wedge_or_trend{pattern_suffix}" in df.columns else int(df.get("wedge_or_trend", pd.Series([0])).sum())
 vcp_total = int(df[f"vcp{pattern_suffix}"].sum()) if f"vcp{pattern_suffix}" in df.columns else int(df["vcp"].sum())
 wedge_total = int(df[f"wedge{pattern_suffix}"].sum()) if f"wedge{pattern_suffix}" in df.columns else int(df["wedge"].sum())
 bo_total = int(df[f"breakout{pattern_suffix}"].sum()) if f"breakout{pattern_suffix}" in df.columns else int(df["breakout"].sum())
 
 col4, col5, col6 = st.columns(3)
-col4.metric("VCPs", vcp_total)
-col5.metric("Wedges", wedge_total)
+col4.metric("Wedge/Trend", wot_total)
+col5.metric("VCPs", vcp_total)
 col6.metric("Breakouts 🔥", bo_total)
 
 # ═══════════════════════════════════════════════════════════════
@@ -180,7 +181,7 @@ st.markdown("---")
 st.subheader("📌 Padrões Detectados" + (" — Semanal" if use_weekly else " — Diário"))
 
 pat_tab1, pat_tab2, pat_tab3, pat_tab4, pat_tab5, pat_tab6 = st.tabs([
-    "🔥 Breakouts", "🌀 VCPs", "🏆 Cup & Handle", "🔺 Wedges", "⬆️ Double Bottom", "👤 Inverse H&S"
+    "🔥 Wedge or Trend", "🌀 VCPs", "🏆 Cup & Handle", "🔺 Wedges Clássicos", "⬆️ Double Bottom", "🔥 Breakouts"
 ])
 
 def show_pattern_table(df_section, pattern_col, title):
@@ -195,17 +196,17 @@ def show_pattern_table(df_section, pattern_col, title):
     st.dataframe(disp.head(20), use_container_width=True, hide_index=True)
 
 with pat_tab1:
-    show_pattern_table(df, f"breakout{pattern_suffix}" if f"breakout{pattern_suffix}" in df.columns else "breakout", "Breakout")
+    show_pattern_table(df, f"wedge_or_trend{pattern_suffix}" if f"wedge_or_trend{pattern_suffix}" in df.columns else "wedge_or_trend", "Wedge or Trend")
 with pat_tab2:
     show_pattern_table(df, f"vcp{pattern_suffix}" if f"vcp{pattern_suffix}" in df.columns else "vcp", "VCP")
 with pat_tab3:
     show_pattern_table(df, f"cup_handle{pattern_suffix}" if f"cup_handle{pattern_suffix}" in df.columns else "cup_handle", "Cup & Handle")
 with pat_tab4:
-    show_pattern_table(df, f"wedge{pattern_suffix}" if f"wedge{pattern_suffix}" in df.columns else "wedge", "Wedge")
+    show_pattern_table(df, f"wedge{pattern_suffix}" if f"wedge{pattern_suffix}" in df.columns else "wedge", "Wedge Clássico")
 with pat_tab5:
     show_pattern_table(df, f"double_bottom{pattern_suffix}" if f"double_bottom{pattern_suffix}" in df.columns else "double_bottom", "Double Bottom")
 with pat_tab6:
-    show_pattern_table(df, f"inverse_hs{pattern_suffix}" if f"inverse_hs{pattern_suffix}" in df.columns else "inverse_hs", "Inverse H&S")
+    show_pattern_table(df, f"breakout{pattern_suffix}" if f"breakout{pattern_suffix}" in df.columns else "breakout", "Breakout")
 
 # ═══════════════════════════════════════════════════════════════
 # RANKING TABLE
@@ -216,7 +217,7 @@ st.subheader("🏆 Ranking Geral" + (" — Semanal" if use_weekly else " — Di�
 # Use a more compact display for mobile
 display_df = df[["rank", "display", "name", "category", tier_col, score_col,
                  "fundamental_tag", "fundamental_score", "price",
-                 "vcp", "wedge", "cup_handle", "double_bottom", "inverse_hs",
+                 "wedge_or_trend", "vcp", "wedge", "cup_handle", "double_bottom",
                  "pre_breakout", "breakout", "roe", "pl", "pvp"]].copy()
 
 display_df["Padrões"] = df.apply(lambda row: get_pattern_badges(row, weekly=use_weekly), axis=1)
@@ -255,11 +256,11 @@ with chart_tab1:
 
 with chart_tab2:
     pattern_counts = {
+        "Wedge/Trend": int(df[f"wedge_or_trend{pattern_suffix}"].sum() if f"wedge_or_trend{pattern_suffix}" in df.columns else df.get("wedge_or_trend", pd.Series([0])).sum()),
         "VCP": int(df[f"vcp{pattern_suffix}"].sum() if f"vcp{pattern_suffix}" in df.columns else df["vcp"].sum()),
-        "Wedge": int(df[f"wedge{pattern_suffix}"].sum() if f"wedge{pattern_suffix}" in df.columns else df["wedge"].sum()),
+        "Wedge Clássico": int(df[f"wedge{pattern_suffix}"].sum() if f"wedge{pattern_suffix}" in df.columns else df["wedge"].sum()),
         "Cup & Handle": int(df[f"cup_handle{pattern_suffix}"].sum() if f"cup_handle{pattern_suffix}" in df.columns else df["cup_handle"].sum()),
         "Double Bottom": int(df[f"double_bottom{pattern_suffix}"].sum() if f"double_bottom{pattern_suffix}" in df.columns else df["double_bottom"].sum()),
-        "Inverse H&S": int(df[f"inverse_hs{pattern_suffix}"].sum() if f"inverse_hs{pattern_suffix}" in df.columns else df["inverse_hs"].sum()),
         "Pre-Breakout": int(df[f"pre_breakout{pattern_suffix}"].sum() if f"pre_breakout{pattern_suffix}" in df.columns else df["pre_breakout"].sum()),
         "Breakout": int(df[f"breakout{pattern_suffix}"].sum() if f"breakout{pattern_suffix}" in df.columns else df["breakout"].sum()),
     }

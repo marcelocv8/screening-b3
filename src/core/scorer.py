@@ -6,7 +6,7 @@ from src.patterns.vcp import detect_vcp
 from src.patterns.wedge import detect_wedge_momentum
 from src.patterns.cup_handle import detect_cup_and_handle
 from src.patterns.double_bottom import detect_double_bottom
-from src.patterns.inverse_hs import detect_inverse_head_shoulders
+from src.patterns.wedge_or_trend import detect_wedge_or_trend
 from src.patterns.breakout import detect_breakout
 
 # Weights for TECHNICAL score (max ~17 points)
@@ -23,10 +23,10 @@ TECH_WEIGHTS = {
     "rs_uptrend_6m": 1.0,
     "liquidity_ok": 0.5,
     "vcp": 3.0,
+    "wedge_or_trend": 4.0,
     "wedge": 2.5,
     "cup_handle": 2.5,
     "double_bottom": 2.0,
-    "inverse_hs": 2.0,
     "pre_breakout": 1.5,
 }
 
@@ -85,24 +85,24 @@ def score_technical(df_daily: pd.DataFrame, df_weekly: pd.DataFrame,
     
     # 2. Patterns on daily
     vcp_ok, vcp_score = detect_vcp(df_daily)
+    wedge_or_trend_ok, wedge_or_trend_score = detect_wedge_or_trend(df_daily)
     wedge_ok, wedge_score = detect_wedge_momentum(df_daily)
     db_ok, db_score = detect_double_bottom(df_daily)
-    ihs_ok, ihs_score = detect_inverse_head_shoulders(df_daily)
     
     if vcp_ok:
         score += TECH_WEIGHTS["vcp"] * vcp_score
+    if wedge_or_trend_ok:
+        score += TECH_WEIGHTS["wedge_or_trend"] * wedge_or_trend_score
     if wedge_ok:
         score += TECH_WEIGHTS["wedge"] * wedge_score
     if db_ok:
         score += TECH_WEIGHTS["double_bottom"] * db_score
-    if ihs_ok:
-        score += TECH_WEIGHTS["inverse_hs"] * ihs_score
     
     details["patterns"] = {
         "vcp": {"detected": vcp_ok, "confidence": round(vcp_score, 2)},
+        "wedge_or_trend": {"detected": wedge_or_trend_ok, "confidence": round(wedge_or_trend_score, 2)},
         "wedge": {"detected": wedge_ok, "confidence": round(wedge_score, 2)},
         "double_bottom": {"detected": db_ok, "confidence": round(db_score, 2)},
-        "inverse_hs": {"detected": ihs_ok, "confidence": round(ihs_score, 2)},
     }
     
     # 3. Cup & Handle on weekly

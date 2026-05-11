@@ -62,15 +62,15 @@ def calculate_breadth_indicators(br_df: pd.DataFrame, us_df: pd.DataFrame = None
     tier_a = (br_df["technical_tier"] == "A").sum() if "technical_tier" in br_df.columns else 0
     
     # Count patterns as proxy for momentum
+    wot_count = int(br_df["wedge_or_trend"].sum()) if "wedge_or_trend" in br_df.columns else 0
     vcp_count = int(br_df["vcp"].sum()) if "vcp" in br_df.columns else 0
     wedge_count = int(br_df["wedge"].sum()) if "wedge" in br_df.columns else 0
     cup_count = int(br_df["cup_handle"].sum()) if "cup_handle" in br_df.columns else 0
     db_count = int(br_df["double_bottom"].sum()) if "double_bottom" in br_df.columns else 0
-    ihs_count = int(br_df["inverse_hs"].sum()) if "inverse_hs" in br_df.columns else 0
     prebo_count = int(br_df["pre_breakout"].sum()) if "pre_breakout" in br_df.columns else 0
     breakout_count = int(br_df["breakout"].sum()) if "breakout" in br_df.columns else 0
     
-    total_signals = vcp_count + wedge_count + cup_count + db_count + ihs_count + prebo_count + breakout_count
+    total_signals = wot_count + vcp_count + wedge_count + cup_count + db_count + prebo_count + breakout_count
     
     # Historical average
     history = _load_signal_history()
@@ -82,6 +82,7 @@ def calculate_breadth_indicators(br_df: pd.DataFrame, us_df: pd.DataFrame = None
         history.append({
             "date": date_str,
             "total_signals": int(total_signals),
+            "wedge_or_trends": int(wot_count),
             "breakouts": int(breakout_count),
             "vcps": int(vcp_count),
         })
@@ -95,6 +96,7 @@ def calculate_breadth_indicators(br_df: pd.DataFrame, us_df: pd.DataFrame = None
         "tier_s": int(tier_s),
         "tier_a": int(tier_a),
         "new_highs": int(new_highs),
+        "wedge_or_trend_count": int(wot_count),
         "vcp_count": int(vcp_count),
         "breakout_count": int(breakout_count),
         "total_signals": int(total_signals),

@@ -3,11 +3,16 @@ import numpy as np
 from typing import Tuple, Optional
 
 def calculate_ma(df: pd.DataFrame, periods: list = [50, 150, 200], col: str = "close") -> pd.DataFrame:
-    """Calculate simple moving averages."""
-    # Ensure column is numeric before rolling
+    """Calculate simple moving averages and momentum returns."""
+    # Ensure column is numeric before rolling (yfinance may return strings)
     df[col] = pd.to_numeric(df[col], errors="coerce")
     for p in periods:
         df[f"sma{p}"] = df[col].rolling(window=p, min_periods=p//2).mean()
+    
+    # Returns for wedge_or_trend strategy
+    df["ret_63d"] = df[col].pct_change(63)
+    df["ret_126d"] = df[col].pct_change(126)
+    
     return df
 
 def calculate_rsi(df: pd.DataFrame, period: int = 14, col: str = "close") -> pd.Series:
@@ -32,12 +37,12 @@ def calculate_atr(df: pd.DataFrame, period: int = 14) -> pd.Series:
 
 def relative_strength(prices: pd.Series, benchmark: pd.Series) -> pd.Series:
     """Calculate relative strength ratio (stock / benchmark)."""
-    # Strip timezone only if DatetimeIndex (RangeIndex has no .tz)
+    # Strip timezone to avoid mismatch
     prices_tz = prices.copy()
     benchmark_tz = benchmark.copy()
-    if hasattr(prices_tz.index, 'tz') and prices_tz.index.tz is not None:
+    if prices_tz.index.tz is not None:
         prices_tz.index = prices_tz.index.tz_localize(None)
-    if hasattr(benchmark_tz.index, 'tz') and benchmark_tz.index.tz is not None:
+    if benchmark_tz.index.tz is not None:
         benchmark_tz.index = benchmark_tz.index.tz_localize(None)
     return prices_tz / benchmark_tz.reindex(prices_tz.index).ffill()
 
