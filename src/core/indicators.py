@@ -37,15 +37,13 @@ def calculate_atr(df: pd.DataFrame, period: int = 14) -> pd.Series:
 
 def relative_strength(prices: pd.Series, benchmark: pd.Series) -> pd.Series:
     """Calculate relative strength ratio (stock / benchmark)."""
+    # Strip timezone to avoid mismatch
     prices_tz = prices.copy()
     benchmark_tz = benchmark.copy()
-    
-    # Only strip timezone if it's actually a DatetimeIndex
-    if isinstance(prices_tz.index, pd.DatetimeIndex) and prices_tz.index.tz is not None:
+    if prices_tz.index.tz is not None:
         prices_tz.index = prices_tz.index.tz_localize(None)
-    if isinstance(benchmark_tz.index, pd.DatetimeIndex) and benchmark_tz.index.tz is not None:
+    if benchmark_tz.index.tz is not None:
         benchmark_tz.index = benchmark_tz.index.tz_localize(None)
-    
     return prices_tz / benchmark_tz.reindex(prices_tz.index).ffill()
 
 def is_uptrend(df: pd.DataFrame) -> dict:

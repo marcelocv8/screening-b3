@@ -380,12 +380,12 @@ def process_batch(universe: pd.DataFrame, yf_client: YFinanceClient,
             "vcp_conf": score_result["patterns"].get("vcp", {}).get("confidence", 0),
             "wedge_or_trend": score_result["patterns"].get("wedge_or_trend", {}).get("detected", False),
             "wedge_or_trend_conf": score_result["patterns"].get("wedge_or_trend", {}).get("confidence", 0),
+            "rasb_trend": score_result["patterns"].get("rasb_trend", {}).get("detected", False),
+            "rasb_trend_conf": score_result["patterns"].get("rasb_trend", {}).get("confidence", 0),
             "wedge": score_result["patterns"].get("wedge", {}).get("detected", False),
             "wedge_conf": score_result["patterns"].get("wedge", {}).get("confidence", 0),
             "cup_handle": score_result["patterns"].get("cup_handle", {}).get("detected", False),
             "cup_handle_conf": score_result["patterns"].get("cup_handle", {}).get("confidence", 0),
-            "double_bottom": score_result["patterns"].get("double_bottom", {}).get("detected", False),
-            "double_bottom_conf": score_result["patterns"].get("double_bottom", {}).get("confidence", 0),
             "pre_breakout": score_result["patterns"].get("pre_breakout", False),
             "breakout": score_result["breakout"],
             "breakout_vol_ratio": score_result["breakout_details"].get("volume_ratio", 0),
@@ -393,9 +393,9 @@ def process_batch(universe: pd.DataFrame, yf_client: YFinanceClient,
             # Weekly patterns
             "vcp_weekly": weekly_patterns.get("vcp", {}).get("detected", False),
             "wedge_or_trend_weekly": weekly_patterns.get("wedge_or_trend", {}).get("detected", False),
+            "rasb_trend_weekly": weekly_patterns.get("rasb_trend", {}).get("detected", False),
             "wedge_weekly": weekly_patterns.get("wedge", {}).get("detected", False),
             "cup_handle_weekly": weekly_patterns.get("cup_handle", {}).get("detected", False),
-            "double_bottom_weekly": weekly_patterns.get("double_bottom", {}).get("detected", False),
             "pre_breakout_weekly": weekly_patterns.get("pre_breakout", False),
             "breakout_weekly": weekly_breakout,
             "roe": fundamentals.get("roe", 0),
@@ -505,6 +505,7 @@ def run_screening():
         "tier_b": int((df_results["technical_tier"] == "B").sum()),
         "breakouts": int(df_results["breakout"].sum()),
         "wedge_or_trends": int(df_results["wedge_or_trend"].sum()),
+        "rasb_trends": int(df_results["rasb_trend"].sum()),
         "vcps": int(df_results["vcp"].sum()),
         "wedges": int(df_results["wedge"].sum()),
         "fund_strong": int((df_results["fundamental_tag"] == "Forte").sum()),
@@ -524,7 +525,7 @@ def run_screening():
         json.dump(ai_opinion, f, indent=2, ensure_ascii=False)
     
     print(f"\n DONE! {len(df_results)} stocks | S:{summary['tier_s']} A:{summary['tier_a']} B:{summary['tier_b']}")
-    print(f" Wedge/Trend: {summary['wedge_or_trends']} | Breakouts: {summary['breakouts']} | VCPs: {summary['vcps']} | Wedges: {summary['wedges']}")
+    print(f" Wedge/Trend: {summary['wedge_or_trends']} | RASB: {summary['rasb_trends']} | Breakouts: {summary['breakouts']} | VCPs: {summary['vcps']} | Wedges: {summary['wedges']}")
     print(f" Fundamentals: Forte:{summary['fund_strong']} OK:{summary['fund_ok']} Fraco:{summary['fund_weak']}")
     print(f" Market Regime: {summary['regime']} (Score: {summary['allocation_score']}/5)")
     print(f" AI Opinion: {'✅ Gemini' if ai_opinion.get('has_ai') else '⚠️ Fallback'}")
