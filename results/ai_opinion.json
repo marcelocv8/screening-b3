@@ -1,8 +1,8 @@
 {
-  "date": "2026-05-11",
-  "opinion": "Mercado em equilíbrio. Indicadores mistos sugerem cautela. Selecionar apenas os melhores setups (Tier S/A) e manter posições menores.",
-  "allocation_score": 3,
-  "regime": "Neutro — Cauteloso",
+  "date": "2026-05-12",
+  "opinion": "Mercado enfraquecendo. Poucos ativos em tendência positiva. Reduzir exposição e aumentar caixa ou hedge.",
+  "allocation_score": 2,
+  "regime": "Mercado Fraco — Defensivo",
   "source": "fallback",
   "has_ai": false
 }
