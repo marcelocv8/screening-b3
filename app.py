@@ -205,6 +205,40 @@ with pat_tab5:
 with pat_tab6:
     show_pattern_table(df, f"wedge{pattern_suffix}" if f"wedge{pattern_suffix}" in df.columns else "wedge", "Wedge Clássico")
 
+# ── Regras Detalhadas ──
+with st.expander("ℹ️ Regras das Estratégias (clique para expandir)"):
+    st.markdown("""
+    **🔥 Wedge or Trend** (score 4.0)
+    - *Perna Wedge:* SMA20 > SMA50 **E** close ≥ 92% da máxima 52 semanas
+    - *Perna Trend:* close > SMA200 **E** SMA50 > SMA150 > SMA200 **E** retorno 63d > 0 **E** retorno 126d > 0 **E** RS ratio > média RS 30d
+    - *Entrada:* Ativa quando **qualquer** das pernas é verdadeira (OR)
+
+    **⚡ RASB Trend** (score 3.5)
+    - *Perna RASB:* close > SMA50 **E** close > máxima 10 dias **E** volume ≥ 1.2x média 20d **E** RS ratio > média RS 30d
+    - *Perna Trend:* Mesmas regras do Trend Momentum acima
+    - *Entrada:* Ativa quando **qualquer** das pernas é verdadeira (OR)
+
+    **🔥 Breakout**
+    - close > máxima dos últimos 20 dias (excluindo hoje)
+    - volume ≥ 1.5x média dos últimos 10 dias
+
+    **🌀 VCP** (Volatility Contraction Pattern)
+    - Pelo menos 4 contrações consecutivas de range
+    - Volume da última contração < 60% da primeira
+    - Range da última contração < 70% da primeira
+    - SMA20 > SMA50 e preço próximo da máxima 52 semanas
+
+    **🏆 Cup & Handle**
+    - Padrão em forma de "U" seguido de consolidação (handle)
+    - Detectado em dados **semanais**
+    - Mínimo de 7 semanas para a formação do copo
+
+    **🔺 Wedge Clássico**
+    - Tops descendentes + fundos ascendentes convergindo
+    - Mínimo de 3 pivots em cada linha de tendência
+    - Volume secando na contração
+    """)
+
 # ═══════════════════════════════════════════════════════════════
 # RANKING TABLE
 # ═══════════════════════════════════════════════════════════════
