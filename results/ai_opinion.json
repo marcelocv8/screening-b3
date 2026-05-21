@@ -1,8 +1,8 @@
 {
-  "date": "2026-05-19",
-  "opinion": "Mercado enfraquecendo. Poucos ativos em tendência positiva. Reduzir exposição e aumentar caixa ou hedge.",
-  "allocation_score": 2,
-  "regime": "Mercado Fraco — Defensivo",
+  "date": "2026-05-21",
+  "opinion": "Mercado em condições técnicas adversas. Proteger capital é prioridade. Mínima ou nenhuma exposição em ações.",
+  "allocation_score": 1,
+  "regime": "Mercado em Queda — Cash/Hedge",
   "source": "fallback",
   "has_ai": false
 }
