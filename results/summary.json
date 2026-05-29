@@ -1,17 +1,17 @@
 {
-  "date": "2026-05-28",
-  "qualified": 548,
-  "tier_s": 5,
-  "tier_a": 126,
-  "tier_b": 99,
-  "breakouts": 15,
+  "date": "2026-05-29",
+  "qualified": 805,
+  "tier_s": 16,
+  "tier_a": 192,
+  "tier_b": 174,
+  "breakouts": 27,
   "wedge_or_trends": 0,
-  "rasb_trends": 126,
-  "vcps": 1,
+  "rasb_trends": 219,
+  "vcps": 3,
   "wedges": 0,
   "fund_strong": 0,
   "fund_ok": 0,
-  "fund_weak": 548,
-  "allocation_score": 2,
-  "regime": "Mercado Fraco \u2014 Defensivo"
+  "fund_weak": 805,
+  "allocation_score": 3,
+  "regime": "Neutro \u2014 Cauteloso"
 }
