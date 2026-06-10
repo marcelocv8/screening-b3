@@ -199,5 +199,13 @@
     "rasb_trends": 354,
     "breakouts": 11,
     "vcps": 8
+  },
+  {
+    "date": "2026-06-10",
+    "total_signals": 949,
+    "wedge_or_trends": 0,
+    "rasb_trends": 341,
+    "breakouts": 7,
+    "vcps": 6
   }
 ]
