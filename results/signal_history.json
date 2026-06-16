@@ -1,12 +1,6 @@
 [
   {
     "date": "2026-05-07",
-    "total_signals": 1705,
-    "breakouts": 42,
-    "vcps": 6
-  },
-  {
-    "date": "2026-05-07",
     "total_signals": 2198,
     "breakouts": 26,
     "vcps": 10
@@ -225,5 +219,13 @@
     "rasb_trends": 406,
     "breakouts": 16,
     "vcps": 6
+  },
+  {
+    "date": "2026-06-16",
+    "total_signals": 1136,
+    "wedge_or_trends": 0,
+    "rasb_trends": 382,
+    "breakouts": 10,
+    "vcps": 5
   }
 ]
