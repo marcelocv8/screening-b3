@@ -1,8 +1,8 @@
 {
-  "date": "2026-08-28",
-  "opinion": "Mercado em equilíbrio. Indicadores mistos sugerem cautela. Selecionar apenas os melhores setups (Tier S/A) e manter posições menores.",
-  "allocation_score": 3,
-  "regime": "Neutro — Cauteloso",
+  "date": "2026-09-29",
+  "opinion": "Mercado em condições técnicas adversas. Proteger capital é prioridade. Mínima ou nenhuma exposição em ações.",
+  "allocation_score": 1,
+  "regime": "Mercado em Queda — Cash/Hedge",
   "source": "fallback",
   "has_ai": false
 }
